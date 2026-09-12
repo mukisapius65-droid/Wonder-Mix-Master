@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChromaMix Master - Paint Color Mixing Game</title>
+    <style>
+        :root {
+            --bg-color: #f4f5f7;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --accent: #3498db;
+            --accent-hover: #2980b9;
+            --border-radius: 12px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            --transition: all 0.25s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f2f5 100%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #e1e4e8;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .dedication {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            font-style: italic;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem 2rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            flex: 1;
+        }
+
+        @media (min-width: 900px) {
+            .game-container {
+                grid-template-columns: 1fr 1fr;
+            }
+            .palette-section {
+                grid-column: 1 / -1;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .swatch-large {
+            width: 150px;
+            height: 150px;
+            border-radius: var(--border-radius);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+            transition: var(--transition);
+            border: 4px solid #fff;
+        }
+
+        .swatch-large:hover {
+            transform: scale(1.02);
+        }
+
+        .swatch-label {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-main);
+            background: #f8f9fa;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .mixing-area {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        .slots-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .slot {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px dashed #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: var(--transition);
+            background-color: #f8fafc;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slot.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.2);
+        }
+
+        .slot.filled {
+            border-style: solid;
+            border-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .slot span {
+            position: absolute;
+            bottom: -20px;
+            font-size: 0.65rem;
+            width: 100%;
+            text-align: center;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .slot:hover span {
+            bottom: 5px;
+        }
+
+        .slider-container {
+            width: 100%;
+            padding: 0 1rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: #e2e8f0;
+            outline: none;
+            margin: 1rem 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: var(--transition);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            background: var(--accent-hover);
+        }
+
+        .ratio-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px rgba(52, 152, 219, 0.3);
+            width: 100%;
+            max-width: 250px;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background-color: #fff;
+            color: var(--text-main);
+            border: 2px solid var(--accent);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: #f0f8ff;
+            color: var(--accent);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .palette-section {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+            gap: 0.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .palette-swatch {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: var(--transition);
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .palette-swatch:hover {
+            transform: scale(1.15);
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border-color: #fff;
+        }
+
+        .palette-swatch::after {
+            content: attr(data-name);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition);
+            margin-bottom: 5px;
+            z-index: 20;
+        }
+
+        .palette-swatch:hover::after {
+            opacity: 1;
+            bottom: 120%;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin: 1rem 0;
+        }
+
+        .feedback-text {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Scrollbar styling */
+        .palette-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+        .palette-grid::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .palette-grid::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .palette-grid::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>ChromaMix Master</h1>
+        <div class="dedication">
+            Dedicated to my incredible boss — a true master of pigments, palettes, and paint. Thank you for inspiring creativity every day!
+        </div>
+    </header>
+
+    <main class="game-container">
+        <!-- Target Color Section -->
+        <section class="card target-section">
+            <h2>Target Swatch</h2>
+            <div id="target-swatch" class="swatch-large" style="background-color: #d0d1d3;"></div>
+            <div id="target-name" class="swatch-label">Silver Birch</div>
+        </section>
+
+        <!-- Mixing Lab Section -->
+        <section class="card mixing-section">
+            <h2>Mixing Lab</h2>
+            <div class="mixing-area">
+                <div class="slots-container">
+                    <div class="slot" id="slot-1" data-slot="1">
+                        <span>Base 1</span>
+                    </div>
+                    <div class="slot" id="slot-2" data-slot="2">
+                        <span>Base 2</span>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <div class="ratio-labels">
+                        <span id="label-1">Base 1 (50%)</span>
+                        <span id="label-2">Base 2 (50%)</span>
+                    </div>
+                    <input type="range" id="ratio-slider" min="0" max="100" value="50">
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <h3 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Your Mix Preview</h3>
+                    <div id="mixed-swatch" class="swatch-large" style="background-color: #e0e0e0;"></div>
+                </div>
+
+                <button class="btn" id="mix-btn" disabled>Mix & Match</button>
+            </div>
+        </section>
+
+        <!-- Palette Section -->
+        <section class="palette-section">
+            <h2>Paint Shelf</h2>
+            <div class="palette-grid" id="palette-grid">
+                <!-- Swatches will be generated by JS -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Game Over Modal -->
+    <div class="modal-overlay" id="game-over-modal">
+        <div class="modal-content">
+            <h2>Mixing Complete!</h2>
+            <div class="score-display" id="final-score">0%</div>
+            <div class="feedback-text" id="feedback-text">Great job!</div>
+            <button class="btn" id="play-again-btn" style="margin: 0 auto;">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Color Data (Extracted from provided paint swatches) ---
+        const paintColors = [
+            // Contrasts - Mix & Match
+            { name: "Silver Birch", hex: "#d0d1d3" },
+            { name: "Smoke Grey", hex: "#9ba3b5" },
+            { name: "Granite", hex: "#6b7280" },
+            { name: "Carbon", hex: "#3b3f46" },
+            { name: "Orchid", hex: "#e5cece" },
+            { name: "Dusty Red", hex: "#a85375" },
+            { name: "Burgundy", hex: "#6b2d40" },
+            { name: "Deep Plum", hex: "#4a3b4b" },
+            { name: "Lotus", hex: "#f5f0ec" },
+            { name: "Blossom", hex: "#e3d5d5" },
+            { name: "Rose Grey", hex: "#a89898" },
+            { name: "Flamingo", hex: "#f0b8b8" },
+            { name: "Roman Red", hex: "#9c4a4a" },
+            { name: "Chestnut", hex: "#6e3a3a" },
+            { name: "Paprika", hex: "#b8203d" },
+            { name: "Cherry", hex: "#8a1b2b" },
+            { name: "Coral Pink", hex: "#f5dcd0" },
+            { name: "Fireball", hex: "#e85a5a" },
+            { name: "Signal", hex: "#c93232" },
+            { name: "Peanut", hex: "#e5cdb0" },
+            { name: "Beetle Nut", hex: "#8d5a45" },
+            { name: "Tobacco", hex: "#5c4238" },
+            { name: "Seville Orange", hex: "#e19431" },
+            { name: "Nutmeg", hex: "#995530" },
+            { name: "Apricot", hex: "#f3bd5f" },
+            { name: "Tangerine", hex: "#e67e22" },
+            { name: "Harvest Gold", hex: "#b67b41" },
+            { name: "Magnolia", hex: "#f5f2d6" },
+            { name: "Sandstone", hex: "#d4cdb8" },
+            { name: "Mink", hex: "#807a73" },
+            
+            // Coat - Shades
+            { name: "Pearl", hex: "#5e6065" },
+            { name: "Midnight", hex: "#464d5a" },
+            { name: "Honeysuckle", hex: "#fcf8e8" },
+            { name: "Cinnamon", hex: "#d8a86b" },
+            { name: "Old Gold", hex: "#a87c3a" },
+            { name: "Suede", hex: "#553d2c" },
+            { name: "Saffron", hex: "#ffcc00" },
+            { name: "Pearl Grey", hex: "#d3d6d8" },
+            { name: "Storm", hex: "#7a8696" },
+            { name: "Tempest", hex: "#4f5966" },
+            { name: "Soft White", hex: "#f5f4ed" },
+            { name: "Kraft Grey", hex: "#b3b7a8" },
+            { name: "Lava", hex: "#a1a09d" },
+            { name: "Prairie Dust", hex: "#8e9090" },
+            { name: "Nightfall", hex: "#23293a" },
+            { name: "Ivory", hex: "#f8f4d3" },
+            { name: "Mimosa", hex: "#f0d558" },
+            { name: "Spice", hex: "#b3a64a" },
+            { name: "Havana", hex: "#4e4237" },
+            { name: "Mustard", hex: "#d5a623" },
+            { name: "Honeycomb", hex: "#8a7d32" },
+            { name: "Primrose", hex: "#f0f0a1" },
+            { name: "Sweetcorn", hex: "#f2de32" },
+            { name: "Valencia", hex: "#e6d115" },
+            { name: "Glacier Green", hex: "#dbe4d0" },
+            { name: "Sage", hex: "#c2ccb9" },
+            { name: "Florida Green", hex: "#859b97" },
+            { name: "Olive", hex: "#4e5453" },
+            { name: "Cape Green", hex: "#2e3432" },
+            { name: "Fiesta", hex: "#c2d4b6" },
+            { name: "Evergreen", hex: "#3b443b" },
+            { name: "Citrus", hex: "#9fbf4f" },
+            { name: "Conifer", hex: "#3d4c2e" },
+            { name: "Lollipop", hex: "#87c832" },
+            { name: "Lime", hex: "#93cc32" },
+            { name: "Snowberry", hex: "#c6dfd3" },
+            
+            // Back to Nature
+            { name: "Orbit Green", hex: "#98b6b4" },
+            { name: "Mallard", hex: "#3a4e50" },
+            { name: "Vintage Green", hex: "#203631" },
+            { name: "Apple", hex: "#55a168" },
+            { name: "Emerald Isle", hex: "#2d8c51" },
+            { name: "Sky Blue", hex: "#a7cfdc" },
+            { name: "Orion", hex: "#447882" },
+            { name: "Winter Blue", hex: "#2c5060" },
+            { name: "Turquoise", hex: "#3c93b5" },
+            { name: "Ice", hex: "#c7d9ea" },
+            { name: "Typhoon", hex: "#808bb4" },
+            { name: "Charcoal", hex: "#434b61" },
+            { name: "Gun Metal", hex: "#293135" },
+            { name: "Angel Blue", hex: "#f0f4f5" },
+            { name: "Horizon Blue", hex: "#6e8fd8" },
+            { name: "Deep Blue", hex: "#1e2a55" },
+            { name: "Denim", hex: "#336fad" },
+            { name: "Baby Blue", hex: "#d1e6ec" },
+            { name: "Oasis Blue", hex: "#9dcbe8" },
+            { name: "Rich Blue", hex: "#4987d1" },
+            { name: "Cornflower", hex: "#426dc6" },
+            { name: "Pale Lilac", hex: "#c6d4ed" },
+            { name: "Jacaranda", hex: "#6a70c4" },
+            { name: "Electric Blue", hex: "#323e88" },
+            { name: "Sapphire", hex: "#4050b5" },
+            { name: "Calypso Blue", hex: "#5685d6" },
+            { name: "Gardenia", hex: "#f5f4ef" },
+            { name: "Lilac Haze", hex: "#c4c2e1" },
+            { name: "Tropical Violet", hex: "#8c4ebd" },
+            { name: "Spanish Violet", hex: "#5430a1" },
+            { name: "Purple Haze", hex: "#d6cce5" },
+            { name: "Currant", hex: "#57246c" },
+            { name: "Cream", hex: "#f4ead5" }
+        ];
+
+        // --- Game State ---
+        const state = {
+            targetColor: null,
+            base1: null,
+            base2: null,
+            activeSlot: 1,
+            ratio: 50, // 0 = all base2, 100 = all base1
+            mixedColor: null,
+            isGameOver: false
+        };
+
+        // --- DOM Elements ---
+        const targetSwatch = document.getElementById('target-swatch');
+        const targetName = document.getElementById('target-name');
+        const slot1 = document.getElementById('slot-1');
+        const slot2 = document.getElementById('slot-2');
+        const ratioSlider = document.getElementById('ratio-slider');
+        const label1 = document.getElementById('label-1');
+        const label2 = document.getElementById('label-2');
+        const mixedSwatch = document.getElementById('mixed-swatch');
+        const mixBtn = document.getElementById('mix-btn');
+        const paletteGrid = document.getElementById('palette-grid');
+        const modal = document.getElementById('game-over-modal');
+        const finalScoreEl = document.getElementById('final-score');
+        const feedbackText = document.getElementById('feedback-text');
+        const playAgainBtn = document.getElementById('play-again-btn');
+
+   // --- Color Utility Functions ---
+        function hexToRgb(hex) {
+            let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
+        function calculateMixedColor(color1, color2, ratio) {
+            if (!color1 || !color2) return null;
+            const rgb1 = hexToRgb(color1);
+            const rgb2 = hexToRgb(color2);
+            
+            // ratio is 0-100, where 100 = all color1, 0 = all color2
+            const r = Math.round(rgb1.r * (ratio / 100) + rgb2.r * ((100 - ratio) / 100));
+            const g = Math.round(rgb1.g * (ratio / 100) + rgb2.g * ((100 - ratio) / 100));
+            const b = Math.round(rgb1.b * (ratio / 100) + rgb2.b * ((100 - ratio) / 100));
+            
+            return rgbToHex(r, g, b);
+        }
+
+        function getColorDistance(hex1, hex2) {
+            const rgb1 = hexToRgb(hex1);
+            const rgb2 = hexToRgb(hex2);
+            // Euclidean distance in RGB space
+            const dist = Math.sqrt(
+                Math.pow(rgb1.r - rgb2.r, 2) +
+                Math.pow(rgb1.g - rgb2.g, 2) +
+                Math.pow(rgb1.b - rgb2.b, 2)
+            );
+            // Max distance is sqrt(255^2 * 3) ≈ 441.67
+            return dist;
+        }
+
+        function calculateMatchScore(hex1, hex2) {
+            const dist = getColorDistance(hex1, hex2);
+            const maxDist = 441.67;
+            // Linear interpolation: 0 distance = 100%, max distance = 0%
+            let score = Math.round(100 - (dist / maxDist * 100));
+            return Math.max(0, Math.min(100, score));
+        }
+
+        // --- Game Logic ---
+        function initGame() {
+            generatePalette();
+            startNewRound();
+            setupEventListeners();
+        }
+
+        function generatePalette() {
+            paletteGrid.innerHTML = '';
+            paintColors.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'palette-swatch';
+                swatch.style.backgroundColor = color.hex;
+                swatch.setAttribute('data-name', color.name);
+                swatch.setAttribute('data-hex', color.hex);
+                
+                swatch.addEventListener('click', () => {
+                    if (state.isGameOver) return;
+                    
+                    if (state.activeSlot === 1) {
+                        state.base1 = color.hex;
+                        slot1.style.backgroundColor = color.hex;
+                        slot1.classList.add('filled');
+                        slot1.innerHTML = `<span>${color.name}</span>`;
+                        state.activeSlot = 2; // Auto-switch to slot 2
+                    } else {
+                        state.base2 = color.hex;
+                        slot2.style.backgroundColor = color.hex;
+                        slot2.classList.add('filled');
+                        slot2.innerHTML = `<span>${color.name}</span>`;
+                        state.activeSlot = 1; // Auto-switch back to slot 1
+                    }
+                    updateSlotsUI();
+                    updateMixPreview();
+                });
+                
+                paletteGrid.appendChild(swatch);
+            });
+        }
+
+        function updateSlotsUI() {
+            if (state.activeSlot === 1) {
+                slot1.classList.add('active');
+                slot2.classList.remove('active');
+            } else {
+                slot2.classList.add('active');
+                slot1.classList.remove('active');
+            }
+        }
+
+        function updateMixPreview() {
+            if (state.base1 && state.base2) {
+                state.mixedColor = calculateMixedColor(state.base1, state.base2, state.ratio);
+                mixedSwatch.style.backgroundColor = state.mixedColor;
+                mixBtn.disabled = false;
+            } else {
+                mixedSwatch.style.backgroundColor = '#e0e0e0';
+                mixBtn.disabled = true;
+            }
+            
+            label1.textContent = `Base 1 (${state.ratio}%)`;
+            label2.textContent = `Base 2 (${100 - state.ratio}%)`;
+        }
+
+        function startNewRound() {
+            // Pick a random target color
+            const randomIndex = Math.floor(Math.random() * paintColors.length);
+            state.targetColor = paintColors[randomIndex];
+            
+            // Update UI
+            targetSwatch.style.backgroundColor = state.targetColor.hex;
+            targetName.textContent = state.targetColor.name;
+            
+            // Reset player state
+            state.base1 = null;
+            state.base2 = null;
+            state.ratio = 50;
+            state.activeSlot = 1;
+            state.mixedColor = null;
+            state.isGameOver = false;
+            
+            // Reset slots
+            slot1.style.backgroundColor = 'transparent';
+            slot1.classList.remove('filled');
+            slot1.innerHTML = '<span>Base 1</span>';
+            slot2.style.backgroundColor = 'transparent';
+            slot2.classList.remove('filled');
+            slot2.innerHTML = '<span>Base 2</span>';
+            
+            // Reset slider
+            ratioSlider.value = 50;
+            
+            // Update UI elements
+            updateSlotsUI();
+            updateMixPreview();
+            
+            // Hide modal
+            modal.classList.remove('active');
+        }
+
+        function handleMix() {
+            if (!state.base1 || !state.base2 || state.isGameOver) return;
+
+            const score = calculateMatchScore(state.mixedColor, state.targetColor.hex);
+            
+            // Determine feedback
+            let feedback = "";
+            if (score >= 95) feedback = "Perfect Match! 🎨";
+            else if (score >= 85) feedback = "Excellent eye! 🌟";
+            else if (score >= 70) feedback = "Good mix! 👍";
+            else if (score >= 50) feedback = "Not bad, keep trying! 💪";
+            else feedback = "Way off! Let's try again. 😅";
+
+            // Show modal
+            finalScoreEl.textContent = `${score}%`;
+            feedbackText.textContent = feedback;
+            modal.classList.add('active');
+            
+            state.isGameOver = true;
+        }
+
+        function setupEventListeners() {
+            // Slot selection
+            slot1.addEventListener('click', () => {
+                if (state.isGameOver) return;
+                state.activeSlot = 1;
+                updateSlotsUI();
+            });
+            
+            slot2.addEventListener('click', () => {
+                if (state.isGameOver) return;
+                state.activeSlot = 2;
+                updateSlotsUI();
+            });
+
+            // Slider
+            ratioSlider.addEventListener('input', (e) => {
+                state.ratio = parseInt(e.target.value);
+                updateMixPreview();
+            });
+
+            // Mix Button
+            mixBtn.addEventListener('click', handleMix);
+
+            // Play Again Button
+            playAgainBtn.addEventListener('click', startNewRound);
+        }
+
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html>
